@@ -1,0 +1,42 @@
+:root {
+  color-scheme: light;
+
+  --hp-bg: #f4f7fb;
+  --hp-bg-gradient: radial-gradient(circle at 15% 0%, rgba(25, 118, 210, 0.1), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #edf3f9 100%);
+  --hp-surface: #ffffff;
+  --hp-surface-soft: #f8fafc;
+  --hp-surface-muted: #eef4fb;
+  --hp-surface-hover: #f1f7ff;
+  --hp-text: #172033;
+  --hp-text-strong: #0f172a;
+  --hp-heading: #14336d;
+  --hp-muted: #64748b;
+  --hp-border: #dbe4ee;
+  --hp-border-strong: #c4d1df;
+  --hp-primary: #1976d2;
+  --hp-primary-hover: #1565c0;
+  --hp-primary-soft: #e3f2fd;
+  --hp-primary-text: #1565c0;
+  --hp-success: #2e7d32;
+  --hp-success-soft: #e8f5e9;
+  --hp-success-border: #c8e6c9;
+  --hp-warning: #ef6c00;
+  --hp-warning-soft: #fff8e1;
+  --hp-warning-border: #ffe0b2;
+  --hp-danger: #c62828;
+  --hp-danger-soft: #ffebee;
+  --hp-danger-border: #ffcdd2;
+  --hp-shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05);
+  --hp-shadow-md: 0 10px 30px rgba(15, 23, 42, 0.1);
+  --hp-shadow-lg: 0 26px 70px rgba(15, 23, 42, 0.14);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --container: 1200px;
+  --page-gutter: clamp(20px, 4vw, 40px);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --transition-fast: 180ms ease;
+}
