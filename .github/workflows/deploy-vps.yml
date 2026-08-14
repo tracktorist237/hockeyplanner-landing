@@ -1,0 +1,49 @@
+name: Deploy Landing to VPS
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hockeyplanner-landing-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and publish landing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy landing on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "Updating production checkout"
+            cd /opt/hockeyplanner/landing-src
+            git fetch --prune origin main
+            git checkout main
+            git reset --hard origin/main
+
+            echo "Installing locked dependencies"
+            npm ci
+
+            echo "Building landing"
+            npm run build
+            test -f /opt/hockeyplanner/landing-src/dist/index.html
+
+            echo "Publishing static files"
+            mkdir -p /opt/hockeyplanner/landing/dist
+            find /opt/hockeyplanner/landing/dist -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+            cp -a /opt/hockeyplanner/landing-src/dist/. /opt/hockeyplanner/landing/dist/
+            test -f /opt/hockeyplanner/landing/dist/index.html
+
+            echo "Landing deployment completed"
