@@ -18,12 +18,22 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Prepare deployment SSH key
+        env:
+          VPS_SSH_KEY_B64: ${{ secrets.VPS_SSH_KEY_B64 }}
+          KEY_PATH: ${{ runner.temp }}/hockeyplanner_landing_actions
+        run: |
+          set -e
+          printf '%s' "$VPS_SSH_KEY_B64" | base64 -d > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          ssh-keygen -y -f "$KEY_PATH" >/dev/null
+
       - name: Deploy landing on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ${{ runner.temp }}/hockeyplanner_landing_actions
           script: |
             set -e
 
