@@ -113,6 +113,13 @@ itself, so the Docker bind mount remains stable.
 The current compose already mounts the whole nginx `conf.d` directory. Keep that mount unchanged.
 The landing needs only one additional static-directory mount.
 
+Production nginx historically serves both production and staging routes. Because the existing
+nginx configuration resolves the `hockeyplanner-staging-backend` upstream, the production nginx
+container must also remain attached to the staging Docker network. A manual `docker network connect`
+is not durable: the attachment disappears whenever Docker recreates the container. Declare the
+external staging network in the production compose file instead; do not add staging services to the
+production compose project.
+
 Current relevant section:
 
 ```yaml
@@ -126,9 +133,20 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
       - /opt/hockeyplanner-staging/frontend/build:/usr/share/nginx/staging-html:ro
+    networks:
+      - hockeyplanner
+      - hockeyplanner-staging
+
+networks:
+  hockeyplanner:
+    driver: bridge
+  hockeyplanner-staging:
+    external: true
+    name: hockeyplanner-staging_hockeyplanner-staging
 ```
 
-Add only the marked landing dist volume without changing the existing mounts:
+Keep those persistent network declarations and add only the marked landing dist volume without
+changing the existing mounts:
 
 ```yaml
 services:
@@ -142,6 +160,16 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
       - /opt/hockeyplanner-staging/frontend/build:/usr/share/nginx/staging-html:ro
+    networks:
+      - hockeyplanner
+      - hockeyplanner-staging
+
+networks:
+  hockeyplanner:
+    driver: bridge
+  hockeyplanner-staging:
+    external: true
+    name: hockeyplanner-staging_hockeyplanner-staging
 ```
 
 Make a backup, edit the actual compose file, and validate it:
@@ -151,7 +179,12 @@ cd /opt/hockeyplanner
 sudo cp docker-compose.yml docker-compose.yml.pre-landing
 sudoedit docker-compose.yml
 docker compose config >/dev/null
+docker network inspect hockeyplanner-staging_hockeyplanner-staging >/dev/null
 ```
+
+The network inspection must succeed before the first nginx recreation. If it fails, stop and restore
+or verify the existing staging compose/network; do not create a replacement network with guessed
+settings.
 
 Do not recreate nginx yet. First install the temporary HTTP-only config described below, because the
 HTTPS certificate does not exist at this point.
@@ -189,12 +222,16 @@ cd /opt/hockeyplanner
 docker compose up -d --no-deps nginx
 docker exec hockeyplanner-nginx nginx -t
 docker compose ps nginx
+docker inspect hockeyplanner-nginx \
+  --format '{{range $name, $settings := .NetworkSettings.Networks}}{{println $name}}{{end}}'
 ```
 
 `docker compose up -d --no-deps nginx` is required once because adding the landing dist volume
 requires container recreation. It does not restart PostgreSQL or the backend. Adding or changing a
 file under the existing `./nginx/conf.d:/etc/nginx/conf.d:ro` directory mount does not require
-another recreation. Subsequent landing application deployments do not restart or reload nginx.
+another recreation. Confirm that the inspection output contains both the production network and
+`hockeyplanner-staging_hockeyplanner-staging`. Subsequent landing application deployments do not
+restart or reload nginx.
 
 Optionally verify the ACME path before requesting the certificate:
 
@@ -243,6 +280,29 @@ sudo test -f /etc/letsencrypt/live/xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/priv
 Do not reuse the `hockeyplanner.ru` certificate unless inspection proves that its SAN list contains
 the landing IDN domain.
 
+### Certificate renewal operation
+
+Production uses host Certbot 2.9.0 with an active `certbot.timer`, while `/etc/letsencrypt` is mounted
+read-only into nginx. After issuance, verify that successful renewal triggers a graceful reload of
+the Dockerized nginx process:
+
+```bash
+systemctl status certbot.timer --no-pager
+sudo test -x /etc/letsencrypt/renewal-hooks/deploy/10-reload-hockeyplanner-nginx.sh
+sudo sed -n '1,120p' /etc/letsencrypt/renewal-hooks/deploy/10-reload-hockeyplanner-nginx.sh
+sudo certbot renew --dry-run
+```
+
+The host-level deploy hook should validate and then reload nginx using:
+
+```bash
+/usr/bin/docker exec hockeyplanner-nginx nginx -t
+/usr/bin/docker exec hockeyplanner-nginx nginx -s reload
+```
+
+Keep this hook as host operational configuration; do not add it to the landing repository. Never
+store Let's Encrypt private keys or other certificate secrets in Git.
+
 ## I. Final nginx config and HTTPS
 
 Copy the reviewed source-controlled config over the temporary HTTP-only file:
@@ -275,8 +335,13 @@ password, `.env`, API key, Timeweb token, Cloudflare token, GitHub PAT, or appli
 
 ## K. First Actions deployment
 
-After the bootstrap files have been reviewed and pushed to `main`, open GitHub **Actions** and select
-**Deploy Landing to VPS**. Confirm that the job:
+Run the first Actions deployment only after the one-time VPS bootstrap is complete: the source
+checkout and persistent publish directories must exist, the initial build must be published, Docker
+mounts/networks and nginx must be working, and all three repository secrets must be configured. An
+Actions run before those prerequisites is expected to fail and does not replace bootstrap.
+
+After bootstrap and a push to `main`, open GitHub **Actions** and select **Deploy Landing to VPS**.
+Confirm that the job:
 
 1. checks out the exact `origin/main` state in `/opt/hockeyplanner/landing-src`;
 2. runs `npm ci` and `npm run build`;
@@ -297,6 +362,9 @@ curl -I https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/robots.txt
 curl -I https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/sitemap.xml
 curl -I https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/og-image.png
 curl -I https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/path-that-must-not-exist
+curl -I https://hockeyplanner.ru/
+curl -I https://staging.hockeyplanner.ru/
+curl -I https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/assets/$(basename "$(find /opt/hockeyplanner/landing/dist/assets -type f | head -n 1)")
 ```
 
 Expected results:
@@ -305,6 +373,8 @@ Expected results:
 - HTTPS `/` returns `200` and the expected title;
 - favicon, robots, sitemap, and OG image return `200`;
 - the unknown path returns `404`, not `index.html`;
+- a hashed `/assets/` response includes `Cache-Control: public, max-age=31536000, immutable`;
+- `https://hockeyplanner.ru/` and `https://staging.hockeyplanner.ru/` both return `200`;
 - all visible CTA links open `https://hockeyplanner.ru/`;
 - mobile layout has no horizontal scroll and the browser console has no errors.
 
