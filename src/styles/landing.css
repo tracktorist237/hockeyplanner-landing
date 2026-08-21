@@ -253,6 +253,16 @@
   .footer-main { grid-template-columns: 1.2fr .7fr 1fr; gap: 36px; }
 }
 
+@media (max-width: 899px) {
+  .reveal,
+  .reveal--observed:not(.reveal--visible),
+  .reveal--visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 @media (max-width: 639px) {
   html, body { min-width: 0; }
   :root { --page-gutter: 18px; }
