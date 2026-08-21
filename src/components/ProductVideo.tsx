@@ -21,16 +21,18 @@ export function ProductVideo({
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(priority);
-  const [isVisible, setIsVisible] = useState(priority);
+  const [isVisible, setIsVisible] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [motionPreference, setMotionPreference] = useState<"unknown" | "reduce" | "no-preference">("unknown");
   const [videoFailed, setVideoFailed] = useState(false);
   const descriptionId = useId();
   const hasVideo = sources.length > 0;
+  const reducedMotion = motionPreference === "reduce";
+  const canRenderVideo = hasVideo && shouldLoad && motionPreference === "no-preference" && !videoFailed;
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReducedMotion(query.matches);
+    const sync = () => setMotionPreference(query.matches ? "reduce" : "no-preference");
     sync();
     if (query.addEventListener) {
       query.addEventListener("change", sync);
@@ -41,17 +43,26 @@ export function ProductVideo({
   }, []);
 
   useEffect(() => {
+    if (!hasVideo || priority || shouldLoad || !frameRef.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setShouldLoad(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "320px 0px", threshold: 0 });
+    observer.observe(frameRef.current);
+    return () => observer.disconnect();
+  }, [hasVideo, priority, shouldLoad]);
+
+  useEffect(() => {
     if (!hasVideo || !frameRef.current) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-        if (entry.isIntersecting) setShouldLoad(true);
-      },
-      { rootMargin: priority ? "0px" : "320px 0px", threshold: 0.12 },
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { rootMargin: "0px", threshold: 0 },
     );
     observer.observe(frameRef.current);
     return () => observer.disconnect();
-  }, [hasVideo, priority]);
+  }, [hasVideo]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -75,10 +86,10 @@ export function ProductVideo({
       aria-labelledby={descriptionId}
     >
       <figcaption className="sr-only" id={descriptionId}>{description}</figcaption>
-      {hasVideo && shouldLoad && !reducedMotion && !videoFailed ? (
+      {canRenderVideo ? (
         <video
           ref={videoRef}
-          autoPlay
+          autoPlay={isVisible && !isPaused}
           muted
           loop
           playsInline
@@ -92,13 +103,19 @@ export function ProductVideo({
           ))}
         </video>
       ) : poster && hasVideo && !videoFailed ? (
-        <img className="product-video-poster" src={poster} alt="" />
+        <img
+          className="product-video-poster"
+          src={poster}
+          alt=""
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+        />
       ) : (
         <div className="product-video-fallback" aria-hidden="true">
           {fallback}
         </div>
       )}
-      {hasVideo && shouldLoad && !reducedMotion && !videoFailed ? (
+      {canRenderVideo ? (
         <button
           className="video-control"
           type="button"

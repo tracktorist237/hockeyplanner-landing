@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 type Theme = "light" | "dark";
 
 const STORAGE_KEY = "hockeyplanner-landing-theme";
@@ -9,14 +7,8 @@ function getCurrentTheme(): Theme {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
-
-  useEffect(() => {
-    setTheme(getCurrentTheme());
-  }, []);
-
   const toggleTheme = () => {
-    const nextTheme: Theme = theme === "dark" ? "light" : "dark";
+    const nextTheme: Theme = getCurrentTheme() === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme;
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute("content", nextTheme === "dark" ? "#07111f" : "#f4f7fb");
@@ -25,7 +17,6 @@ export function ThemeToggle() {
     } catch {
       // Keep the selected theme for this page when storage is unavailable.
     }
-    setTheme(nextTheme);
   };
 
   return (
@@ -33,10 +24,11 @@ export function ThemeToggle() {
       className="theme-toggle"
       type="button"
       onClick={toggleTheme}
-      aria-label={theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}
-      title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+      aria-label="Переключить цветовую тему"
+      title="Переключить цветовую тему"
     >
-      <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
+      <span className="theme-toggle-icon theme-toggle-icon--to-light" aria-hidden="true">☀</span>
+      <span className="theme-toggle-icon theme-toggle-icon--to-dark" aria-hidden="true">☾</span>
     </button>
   );
 }

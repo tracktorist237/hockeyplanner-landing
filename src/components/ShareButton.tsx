@@ -7,17 +7,27 @@ const SHARE_URL = "https://хоккейный-планировщик.рф/";
 
 async function copyWithFallback(value: string) {
   if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Older browsers and restrictive permission policies may still support execCommand.
+    }
   }
   const input = document.createElement("textarea");
   input.value = value;
   input.setAttribute("readonly", "");
-  input.style.cssText = "position:fixed;opacity:0";
+  input.style.cssText = "position:fixed;inset:0;opacity:0;pointer-events:none";
   document.body.append(input);
-  input.select();
-  const copied = document.execCommand("copy");
-  input.remove();
+  let copied = false;
+  try {
+    input.focus({ preventScroll: true });
+    input.select();
+    input.setSelectionRange(0, value.length);
+    copied = document.execCommand("copy");
+  } finally {
+    input.remove();
+  }
   if (!copied) throw new Error("Copy is unavailable");
 }
 

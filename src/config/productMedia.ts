@@ -18,8 +18,8 @@ function media(scene: SceneName): ProductMediaConfig {
   return {
     poster: `/media/${scene}/poster.jpg`,
     sources: [
-      { src: `/media/${scene}/${scene}.webm`, type: "video/webm" },
       { src: `/media/${scene}/${scene}.mp4`, type: "video/mp4" },
+      { src: `/media/${scene}/${scene}.webm`, type: "video/webm" },
     ],
   };
 }
