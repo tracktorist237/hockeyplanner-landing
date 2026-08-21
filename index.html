@@ -3,13 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f7fb" />
-    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        const key = "hockeyplanner-landing-theme";
+        let theme;
+        try {
+          theme = localStorage.getItem(key);
+        } catch {}
+        if (theme !== "light" && theme !== "dark") {
+          theme = "dark";
+        }
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#07111f" : "#f4f7fb";
+        document.documentElement.classList.add("js");
+      })();
+    </script>
 
-    <title>HockeyPlanner — планировщик хоккейной команды</title>
+    <title>HockeyPlanner — планировщик тренировок, матчей и состава хоккейной команды</title>
     <meta
       name="description"
-      content="HockeyPlanner помогает организовать хоккейную команду: планировать тренировки и матчи, собирать состав, отмечать посещаемость и работать с вратарями."
+      content="HockeyPlanner помогает организовать хоккейную команду: планировать тренировки и матчи, собирать состав, учитывать посещаемость и находить вратарей."
     />
     <link rel="canonical" href="https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/" />
 
@@ -21,15 +37,48 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/" />
     <meta property="og:image" content="https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/og-image.png" />
+    <meta property="og:image:secure_url" content="https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="HockeyPlanner — интерфейс планировщика хоккейной команды" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="HockeyPlanner" />
 
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="HockeyPlanner — хоккей без организационного хаоса" />
+    <meta name="twitter:description" content="Тренировки, матчи, состав, посещаемость и вратари — в одном приложении для хоккейной команды." />
+    <meta name="twitter:image" content="https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/og-image.png" />
+    <meta name="twitter:image:alt" content="HockeyPlanner — интерфейс планировщика хоккейной команды" />
+
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="preload" href="/icon-192.png" as="image" type="image/png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/#website",
+            "url": "https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/",
+            "name": "HockeyPlanner",
+            "description": "Планировщик тренировок, матчей и состава хоккейной команды",
+            "inLanguage": "ru-RU"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://hockeyplanner.ru/#application",
+            "name": "HockeyPlanner",
+            "url": "https://hockeyplanner.ru/",
+            "applicationCategory": "SportsApplication",
+            "operatingSystem": "Web",
+            "description": "HockeyPlanner помогает планировать тренировки и матчи, собирать состав, учитывать посещаемость и находить вратарей.",
+            "image": "https://xn----8sbgjrbcagaihxeflmw5fye5a.xn--p1ai/og-image.png",
+            "inLanguage": "ru-RU"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
