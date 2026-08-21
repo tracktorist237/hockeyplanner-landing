@@ -10,17 +10,47 @@ export interface ProductMediaConfig {
 
 type SceneName = "hero" | "events" | "attendance" | "roster" | "goalies";
 
-// Add a scene name after its MP4 and poster have been placed under public/media.
-const enabledMedia = new Set<SceneName>([]);
+interface ProductMediaAssets {
+  mp4: string;
+  webm?: string;
+  poster?: string;
+}
+
+const mediaAssets: Partial<Record<SceneName, ProductMediaAssets>> = {
+  hero: {
+    mp4: "/media/hero/hero.mp4",
+    poster: "/media/hero/poster.jpg",
+  },
+  events: {
+    mp4: "/media/events/events.mp4",
+    poster: "/media/events/poster.jpg",
+  },
+  attendance: {
+    mp4: "/media/attendance/attendance.mp4",
+    poster: "/media/attendance/poster.jpg",
+  },
+  roster: {
+    mp4: "/media/roster/roster.mp4",
+    poster: "/media/roster/poster.jpg",
+  },
+  goalies: {
+    mp4: "/media/goalies/goalies.mp4",
+    poster: "/media/goalies/poster.jpg",
+  },
+};
 
 function media(scene: SceneName): ProductMediaConfig {
-  if (!enabledMedia.has(scene)) return { sources: [] };
+  const assets = mediaAssets[scene];
+  if (!assets) return { sources: [] };
+
+  const sources: ProductMediaSource[] = [
+    { src: assets.mp4, type: "video/mp4" },
+  ];
+  if (assets.webm) sources.push({ src: assets.webm, type: "video/webm" });
+
   return {
-    poster: `/media/${scene}/poster.jpg`,
-    sources: [
-      { src: `/media/${scene}/${scene}.mp4`, type: "video/mp4" },
-      { src: `/media/${scene}/${scene}.webm`, type: "video/webm" },
-    ],
+    poster: assets.poster,
+    sources,
   };
 }
 

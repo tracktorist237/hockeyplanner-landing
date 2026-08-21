@@ -1,5 +1,24 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ProductMediaSource } from "../config/productMedia";
+
+const PLAYBACK_RATES = [0.5, 0.75, 1] as const;
+type PlaybackRate = (typeof PLAYBACK_RATES)[number];
+
+let sharedPlaybackRate: PlaybackRate = 1;
+const playbackRateListeners = new Set<() => void>();
+
+const subscribeToPlaybackRate = (listener: () => void) => {
+  playbackRateListeners.add(listener);
+  return () => playbackRateListeners.delete(listener);
+};
+
+const getPlaybackRate = () => sharedPlaybackRate;
+const getServerPlaybackRate = (): PlaybackRate => 1;
+
+const setSharedPlaybackRate = (rate: PlaybackRate) => {
+  sharedPlaybackRate = rate;
+  playbackRateListeners.forEach((listener) => listener());
+};
 
 interface ProductVideoProps {
   sources: ProductMediaSource[];
@@ -25,10 +44,16 @@ export function ProductVideo({
   const [isPaused, setIsPaused] = useState(false);
   const [motionPreference, setMotionPreference] = useState<"unknown" | "reduce" | "no-preference">("unknown");
   const [videoFailed, setVideoFailed] = useState(false);
+  const playbackRate = useSyncExternalStore(
+    subscribeToPlaybackRate,
+    getPlaybackRate,
+    getServerPlaybackRate,
+  );
   const descriptionId = useId();
   const hasVideo = sources.length > 0;
   const reducedMotion = motionPreference === "reduce";
   const canRenderVideo = hasVideo && shouldLoad && motionPreference === "no-preference" && !videoFailed;
+  const usesPortraitMedia = hasVideo && !videoFailed;
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -67,22 +92,30 @@ export function ProductVideo({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    video.playbackRate = playbackRate;
     if (reducedMotion || isPaused || !isVisible) {
       video.pause();
       return;
     }
     void video.play().catch(() => undefined);
-  }, [isPaused, isVisible, reducedMotion, shouldLoad]);
+  }, [isPaused, isVisible, playbackRate, reducedMotion, shouldLoad]);
 
   const togglePlayback = () => {
     setIsPaused((paused) => !paused);
   };
 
+  const cyclePlaybackRate = () => {
+    const currentIndex = PLAYBACK_RATES.indexOf(playbackRate);
+    setSharedPlaybackRate(PLAYBACK_RATES[(currentIndex + 1) % PLAYBACK_RATES.length]);
+  };
+
+  const playbackRateLabel = `${playbackRate}x`;
+
   return (
     <figure
       ref={frameRef}
-      className="product-video"
-      style={{ aspectRatio }}
+      className={`product-video${usesPortraitMedia ? " product-video--portrait-media" : ""}`}
+      style={{ aspectRatio: usesPortraitMedia ? "426 / 920" : aspectRatio }}
       aria-labelledby={descriptionId}
     >
       <figcaption className="sr-only" id={descriptionId}>{description}</figcaption>
@@ -116,14 +149,24 @@ export function ProductVideo({
         </div>
       )}
       {canRenderVideo ? (
-        <button
-          className="video-control"
-          type="button"
-          onClick={togglePlayback}
-          aria-label={isPaused ? "Воспроизвести демонстрацию" : "Приостановить демонстрацию"}
-        >
-          <span aria-hidden="true">{isPaused ? "▶" : "Ⅱ"}</span>
-        </button>
+        <div className="video-controls">
+          <button
+            className="video-speed-control"
+            type="button"
+            onClick={cyclePlaybackRate}
+            aria-label={`Скорость воспроизведения: ${playbackRateLabel}. Изменить скорость`}
+          >
+            {playbackRateLabel}
+          </button>
+          <button
+            className="video-control"
+            type="button"
+            onClick={togglePlayback}
+            aria-label={isPaused ? "Воспроизвести демонстрацию" : "Приостановить демонстрацию"}
+          >
+            <span aria-hidden="true">{isPaused ? "▶" : "Ⅱ"}</span>
+          </button>
+        </div>
       ) : null}
     </figure>
   );

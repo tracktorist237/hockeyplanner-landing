@@ -1,19 +1,19 @@
 :root {
   color-scheme: light dark;
 
-  --hp-bg: #f4f7fb;
-  --hp-bg-gradient: radial-gradient(circle at 15% 0%, rgba(25, 118, 210, 0.1), transparent 32%),
-    linear-gradient(180deg, #f8fbff 0%, #edf3f9 100%);
+  --hp-bg: #f8fafc;
+  --hp-bg-gradient: radial-gradient(circle at 16% 2%, rgba(25, 118, 210, 0.055), transparent 28%),
+    linear-gradient(180deg, #fcfdff 0%, #f8fafc 54%, #f2f6fa 100%);
   --hp-surface: #ffffff;
-  --hp-surface-soft: #f8fafc;
-  --hp-surface-muted: #eef4fb;
-  --hp-surface-hover: #f1f7ff;
-  --hp-text: #172033;
-  --hp-text-strong: #0f172a;
-  --hp-heading: #14336d;
-  --hp-muted: #64748b;
-  --hp-border: #dbe4ee;
-  --hp-border-strong: #c4d1df;
+  --hp-surface-soft: #f6f9fc;
+  --hp-surface-muted: #edf3f9;
+  --hp-surface-hover: #e8f2fc;
+  --hp-text: #18243a;
+  --hp-text-strong: #0c172b;
+  --hp-heading: #123267;
+  --hp-muted: #53657c;
+  --hp-border: #ced9e6;
+  --hp-border-strong: #b7c7d8;
   --hp-primary: #1976d2;
   --hp-primary-hover: #1565c0;
   --hp-primary-soft: #e3f2fd;
@@ -27,9 +27,9 @@
   --hp-danger: #c62828;
   --hp-danger-soft: #ffebee;
   --hp-danger-border: #ffcdd2;
-  --hp-shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05);
-  --hp-shadow-md: 0 10px 30px rgba(15, 23, 42, 0.1);
-  --hp-shadow-lg: 0 26px 70px rgba(15, 23, 42, 0.14);
+  --hp-shadow-sm: 0 3px 10px rgba(36, 65, 101, 0.07);
+  --hp-shadow-md: 0 16px 38px rgba(36, 69, 110, 0.12);
+  --hp-shadow-lg: 0 30px 80px rgba(28, 60, 101, 0.18);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
     Cantarell, "Helvetica Neue", Arial, sans-serif;
@@ -39,9 +39,9 @@
   --radius-md: 14px;
   --radius-lg: 24px;
   --transition-fast: 180ms ease;
-  --hp-header: rgba(248, 251, 255, 0.82);
+  --hp-header: rgba(255, 255, 255, 0.93);
   --hp-footer: #e9f0f7;
-  --hp-media-bg: #e8eef6;
+  --hp-media-bg: #e8f0f8;
   --hp-on-primary: #ffffff;
   --hp-overlay: rgba(15, 23, 42, 0.64);
 }
